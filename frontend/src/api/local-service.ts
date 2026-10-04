@@ -1,9 +1,28 @@
 import { MODULE_BY_KEY } from '@/data/modules'
 import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
+import {
+  confirmReplenish,
+  markExpired,
+  requestReplenish,
+} from '@/domain/supply/service'
 import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
 const NEGATIVE_ACTIONS = ['撤销', '作废', '拒绝', '驳回', '停用', '忽略', '下线', '回滚']
+
+// 物资模块的动作走领域服务：库存/预警/待办同事务落库，通用状态流转不再适用。
+function dispatchSupplyAction(id: number, action: string): ActionResult {
+  if (action === '发起补充') {
+    return requestReplenish(id)
+  }
+  if (action === '确认补充') {
+    return confirmReplenish(id)
+  }
+  if (action === '标记过期') {
+    return markExpired(id)
+  }
+  return { ok: false, message: `防火物资没有登记「${action}」这个动作` }
+}
 
 export function moduleMeta(key: string): ModuleMeta {
   const meta = MODULE_BY_KEY.get(key)
@@ -30,6 +49,9 @@ export function listEntries(key: string, filters: Record<string, string> = {}): 
 
 export function runAction(key: string, id: number, action: string): ActionResult {
   const meta = moduleMeta(key)
+  if (key === 'supply') {
+    return dispatchSupplyAction(id, action)
+  }
   const target = meta.actionTargets[action]
   if (!target) {
     return { ok: false, message: `${meta.entity}没有登记「${action}」这个动作` }
@@ -66,7 +88,11 @@ export function exportEntries(key: string): { filename: string; content: string 
   const header = ['编号', ...meta.fields, '当前状态']
   const lines = [header.join(',')]
   for (const row of listRows(key)) {
-    lines.push([row.id, ...meta.fields.map((field) => row[field] ?? ''), row.status].join(','))
+    // 物资模块的「物资状态」是派生字段，行上只存 status，导出时补齐。
+    const values = meta.fields.map((field) =>
+      field === '物资状态' && key === 'supply' ? row.status : (row[field] ?? ''),
+    )
+    lines.push([row.id, ...values, row.status].join(','))
   }
   return { filename: `${meta.name}-清单.csv`, content: `\uFEFF${lines.join('\n')}` }
 }

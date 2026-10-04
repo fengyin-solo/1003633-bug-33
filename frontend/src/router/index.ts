@@ -14,6 +14,8 @@ const Campaign = () => import('@/views/campaign/index.vue')
 const Checkpoint = () => import('@/views/checkpoint/index.vue')
 const Duty = () => import('@/views/duty/index.vue')
 const Supply = () => import('@/views/supply/index.vue')
+const SupplyWarning = () => import('@/views/supply/warning.vue')
+const SupplyRequisition = () => import('@/views/supply/requisition.vue')
 const Forestroad = () => import('@/views/forestroad/index.vue')
 const Firebelt = () => import('@/views/firebelt/index.vue')
 const Drill = () => import('@/views/drill/index.vue')
@@ -37,6 +39,8 @@ const router = createRouter({
     { path: '/checkpoint', name: 'checkpoint', component: Checkpoint },
     { path: '/duty', name: 'duty', component: Duty },
     { path: '/supply', name: 'supply', component: Supply },
+    { path: '/supply/warning', name: 'supply-warning', component: SupplyWarning },
+    { path: '/supply/requisition', name: 'supply-requisition', component: SupplyRequisition },
     { path: '/forestroad', name: 'forestroad', component: Forestroad },
     { path: '/firebelt', name: 'firebelt', component: Firebelt },
     { path: '/drill', name: 'drill', component: Drill },
